@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dbname
+    ports:
+      - "5432:5432"
+    networks:
+      internal_network:
+        ipv4_address: 192.168.133.11
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h db -p 5432 -U user" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      internal_network:
+        ipv4_address: 192.168.133.10
+
+networks:
+  internal_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.133.0/24
